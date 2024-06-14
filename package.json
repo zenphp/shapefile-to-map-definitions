@@ -1,0 +1,27 @@
+{
+  "name": "mapbuilder",
+  "version": "1.0.0",
+  "description": "A tool for building map plugins for simple_interactive_maps",
+  "main": "dist/bundle.js",
+  "bin": {
+    "mapbuilder": "./bin/bundle.js"
+  },
+  "scripts": {
+    "build": "node esbuild.config.js"
+  },
+  "author": "Jason",
+  "license": "MIT",
+  "devDependencies": {
+    "d3-geo-projection": "^4.0.0",
+    "ndjson-cli": "^0.3.1",
+    "shapefile": "^0.6.6",
+    "webpack": "^5.92.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "esbuild": "^0.21.5",
+    "esbuild-plugin-copy": "^2.1.1",
+    "esbuild-plugin-handlebars": "^1.0.3",
+    "handlebars": "^4.7.8"
+  }
+}

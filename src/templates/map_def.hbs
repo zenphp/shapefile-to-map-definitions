@@ -1,0 +1,46 @@
+<?php
+
+namespace Drupal\simple_interactive_maps\Plugin\MapDefinition;
+
+use Drupal\simple_interactive_maps\MapDefinitionPluginBase;
+
+/**
+ * Implements US Map of states and territories.
+ *
+ * @MapDefinition (
+ *   id = "{{map_id}}",
+ *   label = @Translation("{{map_name}}"),
+ *   description = @Translation("{{map_description}}"),
+ *   uses_default_tooltip = TRUE,
+ *   default_tooltip = "@label"
+ * )
+ */
+
+ class {{map_class_name}} extends MapDefinitionPluginBase {
+
+    /**
+     * Map data.
+     *
+     * @var array|array[]
+     */
+    private array $mapData = [
+        {{#each counties}}
+        '{{ id }}' => [
+            'label' => '{{ label }}',
+            'svg-data' => [
+              'paths' => [
+                0 => '{{ path }}'
+              ],
+            ],
+        ],
+        {{/each}}
+    ];
+
+    /**
+     * {@inheritDoc}
+     */
+    public function mapData(): array {
+        return $this->mapData;
+    }
+
+ }
