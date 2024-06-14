@@ -1,0 +1,14 @@
+out/*.php
+data/*.json
+data/*.shp
+data/*.shx
+data/*.dbf
+data/*.prj
+data/*.xml
+data/*.cpg
+data/states/*.json
+
+node_modules/
+dist/
+
+.vscode/
