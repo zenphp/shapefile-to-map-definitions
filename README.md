@@ -1,4 +1,4 @@
-# Map builder scrips for simple_interactive_maps module
+# Map builder scripts for simple_interactive_maps module
 
 Makes use of shapefile and d3-geo-projection to convert US Census county shapefiles to
 geojson format.  The geojson is then broken up into individual state definitions, and
@@ -6,6 +6,14 @@ are processed using d3-geo-projection which scales and performs a map projection
 on the geojson to generate an SVG path element definition.  This path element is then
 used, along with the geographic metadata in the geojson to generate pre-built templates
 for the US State and Territory county level maps.
+
+## Instructions:
+
+- Clone this repository
+- From the repository root run `npm i` to install all dependencies and devDependencies
+- Run `npm run gen-maps` to download and extract the shapefiles, convert to geojson, parse it and generate the plugin files.
+- The plugins will be output into the `./out` folder.
+- Generated state level geojson data can be found in `./data/states/`
 
 ## Detailed Description
 
