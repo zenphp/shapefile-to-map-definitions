@@ -7,21 +7,25 @@
     "mapbuilder": "./bin/bundle.js"
   },
   "scripts": {
-    "build": "node esbuild.config.js"
+    "build": "./preparedata.sh && npm run convert && node esbuild.config.js",
+    "convert": "npx shp2json ./data/cb_2023_us_county_5m.shp -o ./data/counties.json",
+    "clean": "find dist -type f ! -name '.gitkeep' -delete",
+    "clean:php": "find out -type f ! -name '.gitkeep' -delete",
+    "clean:data": "find data -type f ! -name '.gitkeep' -delete",
+    "clean:all": "npm run clean && npm run clean:php && npm run clean:data",
+    "gen-maps": "npm run build && node dist/bundle.js"
   },
   "author": "Jason",
   "license": "MIT",
   "devDependencies": {
-    "d3-geo-projection": "^4.0.0",
-    "ndjson-cli": "^0.3.1",
-    "shapefile": "^0.6.6",
-    "webpack": "^5.92.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {
     "esbuild": "^0.21.5",
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-handlebars": "^1.0.3",
+    "d3-geo-projection": "^4.0.0",
+    "shapefile": "^0.6.6"
+  },
+  "dependencies": {
+    "d3-geo-projection": "^4.0.0",
     "handlebars": "^4.7.8"
   }
 }
