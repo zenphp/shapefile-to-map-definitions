@@ -21,7 +21,6 @@
     "esbuild": "^0.21.5",
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-handlebars": "^1.0.3",
-    "d3-geo-projection": "^4.0.0",
     "shapefile": "^0.6.6"
   },
   "dependencies": {

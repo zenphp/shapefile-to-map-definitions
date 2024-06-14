@@ -6,6 +6,7 @@ data/*.dbf
 data/*.prj
 data/*.xml
 data/*.cpg
+data/*.zip
 data/states/*.json
 
 node_modules/
