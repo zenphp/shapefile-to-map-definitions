@@ -5,7 +5,7 @@ esbuild.build({
     entryPoints: ['src/index.js'],
     bundle: true,
     platform: 'node',
-    outfile: 'dist/bundle.js',
+    outdir: 'dist/',
     plugins: [
         copy({
             assets: {

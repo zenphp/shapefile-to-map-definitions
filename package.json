@@ -7,13 +7,13 @@
     "mapbuilder": "./bin/bundle.js"
   },
   "scripts": {
-    "build": "./preparedata.sh && npm run convert && node esbuild.config.js",
-    "convert": "npx shp2json ./data/cb_2023_us_county_5m.shp -o ./data/counties.json",
+    "build": "./preparedata.sh && node esbuild.config.js",
+    "convert": "npx shp2json ./data/county/cb_2023_us_county_5m.shp -o ./data/county/counties.json && npx shp2json ./data/schools/cb_2023_us_unsd_500k.shp -o ./data/schools/schools.json",
     "clean": "find dist -type f ! -name '.gitkeep' -delete",
     "clean:php": "find out -type f ! -name '.gitkeep' -delete",
     "clean:data": "find data -type f ! -name '.gitkeep' -delete",
     "clean:all": "npm run clean && npm run clean:php && npm run clean:data",
-    "gen-maps": "npm run build && node dist/bundle.js"
+    "gen-maps": "npm run build && node dist/index.js"
   },
   "author": "Jason",
   "license": "MIT",

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\us_state_county_maps\Plugin\MapDefinition;
+namespace Drupal\simple_interactive_maps\Plugin\MapDefinition;
 
 use Drupal\simple_interactive_maps\MapDefinitionPluginBase;
 
@@ -15,7 +15,7 @@ use Drupal\simple_interactive_maps\MapDefinitionPluginBase;
  *   description = @Translation("{{map_description}}"),
  *   uses_default_tooltip = TRUE,
  *   default_tooltip = "@label",
- *   map_category = "US Census Bureau County Maps"
+ *   map_category = "US Census Bureau Maps"
  * )
  */
 
@@ -27,7 +27,7 @@ use Drupal\simple_interactive_maps\MapDefinitionPluginBase;
      * @var array|array[]
      */
     private array $mapData = [
-        {{#each items}}
+        {{#each states}}
         '{{ id }}' => [
             'label' => '{{ label }}',
             'svg-data' => [

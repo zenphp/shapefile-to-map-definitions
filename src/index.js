@@ -5,6 +5,9 @@ const path = require('path');
 const Handlebars = require('handlebars');
 const geo = require('d3-geo');
 const geoProject = require('d3-geo-projection');
+const States = require('./states/States.js');
+const Names = require('./names/Names.js');
+const Ids = require('./ids/Ids.js');
 
 // Helper function to convert string to PascalCase
 function toPascalCase(inputString) {
@@ -45,108 +48,246 @@ function convertPolygonToSvgPath(geometry) {
     return svgPathData;
 }
 
+const sources = [
+    {
+        name: 'counties',
+        input: '../data/county/counties.json',
+        rawOutputDir: './data/county/raw',
+        template: 'templates/map_def.hbs',
+        outputDir: './out/counties',
+        name_attribute: 'STATE_NAME',
+    },
+    {
+        name: 'schools',
+        input: '../data/schools/schools.json',
+        rawOutputDir: './data/schools/raw',
+        template: 'templates/map_def_uscd.hbs',
+        outputDir: './out/schools',
+    },
+    {
+        name: 'congressional_districts',
+        input: '../data/congressional_districts/congressional_districts.json',
+        rawOutputDir: './data/congressional_districts/raw',
+        template: 'templates/map_def_congressional_districts.hbs',
+        outputDir: './out/congressional_districts',
+    },
+]
+
 console.log('Starting...');
 
-console.log('Loading counties data...');
-// Load the counties data from ../data/counties.json
-const counties = require('../data/counties.json');
+sources.forEach(source => {
 
-const states = [];
+    console.log(`Loading ${source.name} data...`);
+    // Load the counties data from ../data/counties.json
+    const sourceData = require(source.input);
 
-console.log('Processing counties data into states...');
-counties.features.forEach(county => {
-    const state = county.properties.STATE_NAME;
-    // if states[state] does not exist, create it
-    if (!states[state]) {
-        console.log('Adding state:', state);
-        states[state] = {
-            type: "FeatureCollection",
-            features: []
+    const states = [];
+
+    console.log('Processing counties data into states...');
+    sourceData.features.forEach(item => {
+        const state = States.getStateFromData(item);
+        // if states[state] does not exist, create it
+        if (!states[state]) {
+            console.log('Adding state:', state);
+            states[state] = {
+                type: "FeatureCollection",
+                features: []
+            }
         }
-    }
-    console.log('Adding county:', county.properties.NAME, 'to state:', state);
-    states[state].features.push(county);
-});
-
-console.log('Writing state data to files...');
-// Iterate over states
-Object.keys(states).forEach(state => {
-    console.log('Writing state data for:', state);
-    const stateData = states[state];
-    const outputDir = './data/states';
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir);
-    }
-    fs.writeFileSync(path.join(outputDir, `${state}-counties.json`), JSON.stringify(stateData));
-});
-
-console.log('Creating PHP files...');
-Object.keys(states).forEach(stateKey => {
-    console.log('Processing state:', stateKey);
-    const state = states[stateKey];
-    console.log('Projecting state data...');
-    // Apply projection to each state
-    let projection;
-
-    switch (stateKey) {
-        case 'Alaska':
-            // Alaska is a special case, mercator projection does not work well.
-            projection = geo.geoAlbersUsa().fitSize([4800, 3000], state);
-            break;
-        default:
-            projection = geo.geoMercator().fitSize([4800, 3000], state);
-            break
-    }
-
-    const countyData = [];
-
-    console.log('Processing counties data...');
-    // Iterate over features
-    state.features.forEach(county => {
-        const countyName = county.properties.NAME;
-        const countyId = county.properties.STUSPS + '-' + county.properties.GEOID;
-        const countyPolygon = county.geometry;
-
-        console.log('Processing county:', countyName, 'with id:', countyId);
-
-        if (countyPolygon) {
-            const svgPathData = geo.geoPath().projection(projection)(countyPolygon) ;
-
-            countyData.push({
-                label: countyName,
-                id: countyId,
-                path: svgPathData,
-            });
-        }
+        const itemName = Names.getNameFromData(item);
+        console.log(`Adding ${itemName} to state: ${state}`);
+        states[state].features.push(item);
     });
 
-    const templatePath = path.resolve(__dirname, 'templates/map_def.hbs');
-    const source = fs.readFileSync(templatePath, 'utf8');
-    const template = Handlebars.compile(source);
+    console.log('Writing state data to files...');
+    // Iterate over states
+    Object.keys(states).forEach(state => {
+        console.log('Writing state data for:', state);
+        const stateData = states[state];
+        const outputDir = source.rawOutputDir;
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir);
+        }
+        fs.writeFileSync(path.join(outputDir, `${state}-${source.name}.json`), JSON.stringify(stateData));
+    });
 
-    const map_id = stateKey.replace(/\s/g, '_').toLowerCase() + '_counties';
-    const class_name = toPascalCase(stateKey) + "Map";
-    const map_name = stateKey + ' Counties';
-    const map_description = 'A map of ' + stateKey + ' counties';
-    const currentTimestamp = new Date().toISOString();
+    console.log('Creating PHP files...');
+    Object.keys(states).forEach(stateKey => {
+        console.log('Processing state:', stateKey);
+        const state = states[stateKey];
+        console.log('Projecting state data...');
+        // Apply projection to each state
+        let projection;
 
-    const data = {
-        map_id: map_id,
-        map_class_name: class_name,
-        map_name: map_name,
-        map_description: map_description,
-        counties: countyData,
-        timestamp: currentTimestamp,
-    };
+        switch (stateKey) {
+            case 'Alaska':
+                // Alaska is a special case, mercator projection does not work well.
+                projection = geo.geoAlbersUsa().fitSize([4800, 3000], state);
+                break;
+            default:
+                projection = geo.geoMercator().fitSize([4800, 3000], state);
+                break
+        }
 
-    const outputDir = './out';
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir);
-    }
+        const tempateData = [];
 
-    const result = template(data);
-    fs.writeFileSync(path.join(outputDir, `${class_name}.php`), result);
+        console.log(`Processing data...`);
+        // Iterate over features
+        state.features.forEach(item => {
+            const itemName = Names.getNameFromData(item);
+            const itemId = Ids.getIdFromData(item);
+            const itemPolygon = item.geometry;
+
+            console.log(`Processing ${source.name}:`, itemName, 'with id:', itemId);
+
+            if (itemPolygon) {
+                const svgPathData = geo.geoPath().projection(projection)(itemPolygon);
+
+                tempateData.push({
+                    label: itemName,
+                    id: itemId,
+                    path: svgPathData,
+                });
+            }
+        });
+
+        const templatePath = path.resolve(__dirname, source.template);
+        const templateSource = fs.readFileSync(templatePath, 'utf8');
+        const template = Handlebars.compile(templateSource);
+
+        const map_id = stateKey.replace(/\s/g, '_').toLowerCase() + '_' + source.name;
+
+        // convert source.name from snake_case to PascalCase
+        const sourceName = source.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+        const class_name = toPascalCase(stateKey) + sourceName +  "Map";
+
+        const humanName = source.name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        const map_name = stateKey + ' ' + humanName + ' Map';
+        const map_description = 'A map of ' + stateKey + ' ' + humanName + ' data';
+
+        const currentTimestamp = new Date().toISOString();
+
+        const data = {
+            map_id: map_id,
+            map_class_name: class_name,
+            map_name: map_name,
+            map_description: map_description,
+            items: tempateData,
+            timestamp: currentTimestamp,
+        };
+
+        const outputDir = source.outputDir;
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir);
+        }
+
+        const result = template(data);
+        fs.writeFileSync(path.join(outputDir, `${class_name}.php`), result);
+    });
 });
+
+
+// console.log('Loading school district data...');
+// const schools = require('../data/schools/schools.json');
+
+// states = [];
+
+// console.log('Processing schools data into states...');
+// schools.features.forEach(school => {
+//     const state = school.properties.STATE_NAME;
+//     // if states[state] does not exist, create it
+//     if (!states[state]) {
+//         console.log('Adding state:', state);
+//         states[state] = {
+//             type: "FeatureCollection",
+//             features: []
+//         }
+//     }
+//     console.log(school.properties);
+//     console.log('Adding school:', school.properties.NAME, 'to state:', state);
+//     states[state].features.push(school);
+// });
+
+// console.log('Writing state data to files...');
+// // Iterate over states
+// Object.keys(states).forEach(state => {
+//     console.log('Writing state data for:', state);
+//     const stateData = states[state];
+//     const outputDir = './data/schools/raw';
+//     if (!fs.existsSync(outputDir)) {
+//         fs.mkdirSync(outputDir);
+//     }
+//     fs.writeFileSync(path.join(outputDir, `${state}-ucsd.json`), JSON.stringify(stateData));
+// });
+
+// console.log('Creating PHP files...');
+// Object.keys(states).forEach(stateKey => {
+//     console.log('Processing state:', stateKey);
+//     const state = states[stateKey];
+//     console.log('Projecting state data...');
+//     // Apply projection to each state
+//     let projection;
+
+//     switch (stateKey) {
+//         case 'Alaska':
+//             // Alaska is a special case, mercator projection does not work well.
+//             projection = geo.geoAlbersUsa().fitSize([4800, 3000], state);
+//             break;
+//         default:
+//             projection = geo.geoMercator().fitSize([4800, 3000], state);
+//             break
+//     }
+
+//     const schoolData = [];
+
+//     console.log('Processing school data...');
+//     // Iterate over features
+//     state.features.forEach(school => {
+//         const schoolName = school.properties.NAME;
+//         const schoolId = school.properties.STUSPS + '-' + school.properties.GEOID;
+//         const schoolPolygon = school.geometry;
+
+//         console.log('Processing county:', schoolName, 'with id:', schoolId);
+
+//         if (schoolPolygon) {
+//             const svgPathData = geo.geoPath().projection(projection)(schoolPolygon);
+
+//             schoolData.push({
+//                 label: schoolName,
+//                 id: schoolId,
+//                 path: svgPathData,
+//             });
+//         }
+//     });
+
+//     const templatePath = path.resolve(__dirname, 'templates/map_def_uscd.hbs');
+//     const source = fs.readFileSync(templatePath, 'utf8');
+//     const template = Handlebars.compile(source);
+
+//     const map_id = stateKey.replace(/\s/g, '_').toLowerCase() + '_usd';
+//     const class_name = toPascalCase(stateKey) + "Map";
+//     const map_name = stateKey + ' Unified School Districts';
+//     const map_description = 'A map of ' + stateKey + ' Unified School Districts';
+//     const currentTimestamp = new Date().toISOString();
+
+//     const data = {
+//         map_id: map_id,
+//         map_class_name: class_name,
+//         map_name: map_name,
+//         map_description: map_description,
+//         districts: schoolData,
+//         timestamp: currentTimestamp,
+//     };
+
+//     const outputDir = './out/schools';
+//     if (!fs.existsSync(outputDir)) {
+//         fs.mkdirSync(outputDir);
+//     }
+
+//     const result = template(data);
+//     fs.writeFileSync(path.join(outputDir, `${class_name}.php`), result);
+// });
+
 
 
 console.log('PHP files created successfully.');

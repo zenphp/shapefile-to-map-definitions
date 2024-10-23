@@ -1,13 +1,12 @@
-out/*.php
-data/*.json
-data/*.shp
-data/*.shx
-data/*.dbf
-data/*.prj
-data/*.xml
-data/*.cpg
-data/*.zip
-data/states/*.json
+out/**/*.php
+data/**/*.json
+data/**/*.shp
+data/**/*.shx
+data/**/*.dbf
+data/**/*.prj
+data/**/*.xml
+data/**/*.cpg
+data/**/*.zip
 
 node_modules/
 dist/
